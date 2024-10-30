@@ -1,6 +1,9 @@
-# Platformer
+# Platformer 2021
 
 This Java platformer game code is designed to create an interactive, multi-level environment with both free play and structured levels. The player can navigate using keyboard controls, aiming to reach a goal in each level, and unlocking levels sequentially. The game features a start menu, levels menu, and on-screen announcements to enhance gameplay.
+
+<img src="https://github.com/user-attachments/assets/e091bab2-8381-48e4-b6c6-239c6eec732f" width="300"/>
+<img src="https://github.com/user-attachments/assets/9a2b061f-6d4a-468d-b7e5-d0e75c23b635" width="300"/>
 
 ## Key Features
 
