@@ -1,0 +1,875 @@
+import java.awt.Color;
+import java.util.Random;
+import java.util.ArrayList;
+import java.util.Hashtable;
+
+class Vec {
+    private double x, y;
+
+    /**
+     * Creates new Vector
+     * @param x x-position
+     * @param y y-position
+     */
+    public Vec(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Gets x-value
+     * @return x-component of Vector
+     */
+    public double getX() {
+        return x;
+    }
+
+    /**
+     * Gets y-value
+     * @return y-component of Vector
+     */
+    public double getY() {
+        return y;
+    }
+
+    /**
+     * Sets y-value
+     * @param y new y-component of Vector
+     */
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    /**
+     * Sets x-value
+     * @param x new x-component of Vector
+     */
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    /**
+     * Adds Vector to this Vector
+     * @param b Vector to be added
+     * @return this
+     */
+    public Vec add(Vec b) {
+        x += b.x;
+        y += b.y;
+        return this;
+    }
+
+    /**
+     * Multiply each component by some double
+     * @param m double to multiply each component
+     * @return this
+     */
+    public Vec mult(double m) {
+        x *= m;
+        y *= m;
+        return this;
+    }
+
+    /**
+     * Gets magnitude of Vector
+     * @return magnitude
+     */
+    public double getMag() {
+        return Math.sqrt(x*x+y*y);
+    }
+
+    /**
+     * Sets magntitude of Vector
+     * @param val new magnitude
+     * @return this
+     */
+    public Vec setMag(double val) {
+        return mult((val/getMag()));
+    }
+
+    /**
+     * Limits magnitude
+     * @param max max magnitude 
+     * @return this
+     */
+    public Vec limit(double max) {
+        if (getMag() > max) {
+            setMag(max);
+        }
+        return this;
+    }
+
+    /**
+     * Limits x-component of Vector
+     * @param min minimum x-value
+     * @param max maximum x-value
+     */
+    public void limitX(double min, double max) {
+        x = Math.min(max, Math.max(x, min));
+    }
+
+    /**
+     * Limits y-component of Vector
+     * @param min minimum y-value
+     * @param max maximum y-value
+     */
+    public void limitY(double min, double max) {
+        y = Math.min(max, Math.max(y, min));
+    }
+
+
+    /**
+     * Returns String representation of object in form "(x, y)"
+     */
+    public String toString() {
+        return "(" + x + ", " + y + ")";
+    }
+}
+
+class Player {
+    public Vec SPEED = new Vec(0.2, 0);
+    public Vec NEGATIVE_SPEED = new Vec(-0.2, 0);
+    public Vec JUMP_SPEED = new Vec(0, -4);
+
+    private Vec pos, vel, acc;
+    private double height = 30, width = 10;
+    private Color c;
+    private boolean jumping = true;
+
+    public Player(double x, double y) {
+        pos = new Vec(x, y);
+        vel = new Vec(0, 0);
+        acc = new Vec(0, 0);
+        setColor(255);
+    }
+
+    /**
+     * Applies force to Player sprite
+     * @param force Vector of force
+     */
+    public void applyForce(Vec force) {
+        acc.add(force);
+    }
+
+    /**
+     * Changes player color rgb
+     * @param r red
+     * @param g green
+     * @param b blue
+     */
+    public void setColor(int r, int g, int b) {
+        c = new Color(r, g, b);
+    }
+
+    /**
+     * Changes player color
+     * @param v grayscale color
+     */
+    public void setColor(int v) {
+        c = new Color(v, v, v);
+    }
+
+    /**
+     * Gets player's width
+     * @return player's width
+     */
+    public double getWidth() {
+        return width;
+    }
+
+    /**
+     * Gets player's height
+     * @return player's height
+     */
+    public double getHeight() {
+        return height;
+    }
+
+    /**
+     * Gets player's position as a vector
+     * @return player's position vector
+     */
+    public Vec getPos() {
+        return pos;
+    }
+
+    /**
+     * Gets player's velocity as a vector
+     * @return player's velocity vector
+     */
+    public Vec getVel() {
+        return vel;
+    }
+
+    /**
+     * Limits velocity vector to prevent player from going through platform.
+     * Simulated arbitruary friction of -24% each frame.
+     */
+    public void collide() {
+        // prevents player from falling through platform
+        acc.limitY(Double.MIN_VALUE, 0);
+
+        // friction!
+        vel.setX(vel.getX() * 0.76);
+    }
+
+    /**
+     * Returns true is the player is jumping or is falling.
+     * False if the player is allowed to jump.
+     * @return true if player can't jump again; false if it can.
+     */
+    public boolean isJumping() { 
+        return jumping || vel.getY() > 0.09;
+    }
+
+    /**
+     * Sets jumping variable.
+     * @param b true if jumping; false if not.
+     */
+    public void setJump(boolean b) {
+        jumping = b;
+    }
+
+    /**
+     * Updates player's position, velocity, and acceloration.
+     * Accounts for player overflow on the x-axis.
+     * @param w width of screen
+     */
+    public void update(double w) {
+        vel.add(acc);
+
+        vel.limitX(-3, 3);
+        vel.limitY(-5, 10);
+        
+        pos.add(vel);
+        acc.mult(0);
+
+        // screen overflow
+        if (pos.getX() + this.width * 0.5 < 0) pos.setX(w+width*0.5);
+        else if (pos.getX() - this.width * 0.5 > w) pos.setX(0-width*0.5);
+    }
+
+    /**
+     * Draws player
+     */
+    public void draw() {
+        rectMode(CENTER);
+        noStroke();
+        fill(c.getRGB());
+        rect((float) (pos.getX()), (float) (pos.getY()-height*0.5), (float) width, (float) height);
+    }
+}
+
+class Announcement {
+    private final double frames;
+    private double age;
+    private String t;
+    public Announcement(String text, double frames) {
+        this.frames = frames;
+        this.t = text;
+    }
+
+    /**
+     * Draws announcement
+     */
+    public void draw() {
+        fill(255);
+        rectMode(CORNERS);
+        text(t, width*0.1, height*0.4, width*0.9, height);
+    }
+
+    /**
+     * True if should display announcement.
+     * @return true if announcement has not reached maximum frame count yet.
+     */
+    public boolean isAlive() {
+        age++;
+        return age < frames;
+    }
+}
+
+abstract class Platform {
+    private double x, y, width, height;
+    
+    public Platform(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Gets platform's x-position.
+     * @return platform's x-value
+     */
+    public double getX() {
+        return x;
+    }
+
+    /**
+     * Gets platform's y-position.
+     * @return platform's y-value
+     */
+    public double getY() {
+        return y;
+    }
+
+    /**
+     * Gets platforms width.
+     * @return platform's width
+     */
+    public double getWidth() {
+        return width;
+    }
+
+    /**
+     * Gets platforms height.
+     * @return platform's height
+     */
+    public double getHeight() {
+        return height;
+    }
+
+    /**
+     * Sets platform's width.
+     * @param width new width for platform
+     */
+    public void setWidth(double width) {
+        this.width = width;
+    }
+
+    /**
+     * Sets platform's height.
+     * @param height new height for platform
+     */
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    /**
+     * Adds amount to the y-value.
+     * @param amount amount being added to y-value
+     */
+    public void addY(double amount) {
+        y += amount;
+    }
+
+    /**
+     * Returns true if the player is colling with the platform
+     * @param playerPos player position as a vector 
+     * @return true if player is colling with the platform
+     */
+    public boolean isColliding(Vec playerPos) {
+        return (playerPos.getX() >= x-getWidth()*0.5 && playerPos.getX() <= x+getWidth()*0.5) && (playerPos.getY() >= y-getHeight()*0.5 && playerPos.getY() <= y+getHeight()*0.5);
+    }
+
+    /**
+     * Returns true if the player has passed this platform
+     * @param playerPos player position as a vector
+     * @return true if the player has passed this platform
+     */
+    public boolean beenPassed(Vec playerPos) {
+        return (playerPos.getY() < y);
+    }
+
+    /**
+     * Allow platforms to change player attributes (position, velocity, etc.)
+     */
+    public void update(Player p) {}
+
+    abstract public void draw();
+}
+
+class NormalP extends Platform {
+    public NormalP(double x, double y) {
+        super(x, y);
+        setWidth(60);
+        setHeight(10);
+    }
+
+    /**
+     * Draws NormalP platform.
+     */
+    public void draw() {
+        noStroke();
+        fill(18, 179, 29);
+
+        rectMode(CENTER);
+        rect((float) getX(), (float) getY(), (float) getWidth(), (float) getHeight(), 30);
+    }
+}
+
+class BreakableP extends Platform {
+    private final double ogAge = 21;
+    private double age;
+
+    public BreakableP(double x, double y, Random r) {
+        super(x, y);
+        setWidth(60);
+        setHeight(10);
+        age = ogAge;
+    }
+
+    /**
+     * Draws BreakableP platform.
+     */
+    public void draw() {
+        noStroke();
+        fill(148, 74, 18, (float) (age/ogAge * 255));
+
+        rectMode(CENTER);
+        rect((float) getX(), (float) getY(), (float) getWidth(), (float) getHeight(), 30);
+    }
+
+    @Override
+    public boolean isColliding(Vec playerPos) {
+        if (age < 0) setWidth(0);
+        else if (super.isColliding(playerPos)) {
+            age--;
+            return true;
+        }
+        return false;
+    }
+}
+
+class MovableP extends Platform {
+    // original width
+    private final double ogWidth = 60;
+
+    // angle used for sin calculation
+    private double theta;
+    
+    public MovableP(double x, double y, Random r) {
+        super(x, y);
+        setWidth(ogWidth);
+        setHeight(10);
+
+        // theta = Math.random()*7;
+        theta = r.nextDouble()*7;
+    }
+
+    /**
+     * Draws MovableP platform.
+     */
+    public void draw() {
+        noStroke();
+        fill(50, 164, 168);
+
+        rectMode(CENTER);
+        rect((float) getX(), (float) getY(), (float) getWidth(), (float) getHeight(), (float) 30);
+
+        update();
+    }
+
+    /**
+     * Updates theta value and sets width to sin wave of it.
+     */
+    public void update() {
+        theta += 0.03;
+        setWidth((Math.sin(theta) + 1) * 0.5 * ogWidth);
+    }
+}
+
+// NOT USED !!!EXPERIMENTAL!!!
+class SpringP extends Platform {
+    private boolean sprung;
+    private Vec springForce;
+
+    public SpringP(double x, double y) {
+        super(x, y);
+        setWidth(60);
+        setHeight(10);
+        sprung = false;
+        springForce = new Vec(0, -100);
+    }
+
+    /**
+     * Draws SpringP platform.
+     */
+    public void draw() {
+        noStroke();
+        fill(240, 19, 21);
+
+        rectMode(CENTER);
+        rect((float) getX(), (float) getY(), (float) getWidth(), (float) getHeight(), 30);
+    }
+
+    @Override
+    public void update(Player p) {
+        if (!sprung && isColliding(p.getPos())) {
+            p.applyForce(springForce);
+            sprung = true;
+        }
+    }
+}
+
+class Button extends Platform {
+    private String text;
+    private boolean unlocked;
+
+    public Button(double x, double y, double w, double h, String text) {
+        super(x, y);
+        setWidth(w);
+        setHeight(h);
+        this.text = text;
+        unlocked = true;
+    }
+
+    /**
+     * Finds if the button is unlocked.
+     * @return true if unlocked
+     */
+    public boolean isUnlocked() {
+        return unlocked;
+    }
+
+    /**
+     * Locks the button.
+     * @return this
+     */
+    public Button lock() {
+        unlocked = false;
+        return this;
+    }
+
+    /**
+     * Unlocked the button.
+     */
+    public void unlock() {
+        unlocked = true;
+    }
+
+    /**
+     * Draws Button.
+     */
+    public void draw() {
+        stroke(255);
+        if (unlocked) fill(96, 66, 245);
+        else fill(27, 19, 69);
+
+        rectMode(CENTER);
+        rect((float) getX(), (float) getY(), (float) getWidth(), (float) getHeight(), 10);
+
+        fill(255);
+        textSize(30);
+        textAlign(CENTER);
+        text(text, (float) getX(), (float) getY()+textAscent()*0.4);
+    }
+}
+
+class Level {
+    private Vec gravity = new Vec(0, 0.09);
+    private final Random r;
+    private int score;
+    private boolean goal, announced = false;
+
+    private Player player;
+    private ArrayList<Platform> platforms;
+    
+    private Hashtable<Long, Integer> highscores;
+    private long seed;
+
+    public Level(Player p, long seed, Hashtable<Long, Integer> highscores) {
+        player = p;
+
+        r = new Random(seed);
+        score = 0;
+        goal = false;
+
+        this.seed = seed;
+        this.highscores = highscores;
+
+        platforms = new ArrayList<Platform>();  
+
+        // starting platform
+        platforms.add(new NormalP(width/2, height));
+
+        fillPlatforms();
+    }
+
+    /**
+     * Fills the blank space at the top of screen with more platforms
+     */
+    public void fillPlatforms() {
+        for (double y = platforms.get(platforms.size()-1).getY(); y > 0;) {
+            y -= r.nextDouble() * 10 + 40;
+            addPlatform(r.nextDouble() * width, y);
+            // y -= Math.random() * 10 + 40;
+            // addPlatform(Math.random() * width, y);
+        }
+    }
+
+    /**
+     * Adds a random platform at position (x, y).
+     * 10% chance for BreakableP platform.
+     * 20% chance for MovableP platform.
+     * 70% chance for NormalP platform.
+     * @param x horizontal coordinate
+     * @param y vertical coordinate
+     */
+    public void addPlatform(double x, double y) {
+        // double seed = Math.random();
+        // platforms.add(new SpringP(x, y));
+        double seed = r.nextDouble();
+        if (seed < 0.1) platforms.add(new BreakableP(x, y, r));
+        else if (seed < 0.3) platforms.add(new MovableP(x, y, r));
+        else platforms.add(new NormalP(x, y));
+    }
+
+    /**
+     * Clears the screen. Draws the player. Draws the platforms.
+     */
+    public void draw() {
+        background(0);
+        player.draw();
+
+        for (Platform p: platforms) {
+            p.draw();
+            p.update(player);
+        }
+
+        fill(255);
+        textSize(60);
+        text(score, width/2, height*0.1);
+
+        // update highscore
+        if (score > highscores.get(seed)) highscores.put(seed, score);
+        textSize(20);
+        text("Highscore: " + highscores.get(seed), width/2, height*0.1+30);
+
+        // check to see if goal reached
+        if (goal) {
+            int g = (int) (seed+1)*5;
+            text("Goal to reach: " + g, width/2, height * 0.1+60);
+            if (score >= g && !announced) {
+                announced = true;
+                announce("Goal Reached! You can move on to the next level by pressing ESC on your keyboard", 600);
+                unlockNextLevel();
+            }
+        }
+    }
+
+    /**
+     * Updates the player and platforms. Accounts for user input and collisions.
+     * Locks the player at no more than 25% up the screen.
+     * 
+     * @param keys boolean array of key presses: w:0, a:1, d:2.
+     */
+    public void update(boolean[] keys) {
+        // a
+        if (keys[1]) {
+            player.applyForce(player.NEGATIVE_SPEED);
+        // d
+        } if (keys[2]) {
+            player.applyForce(player.SPEED);
+        }
+
+        player.applyForce(gravity);
+        player.update(width);
+
+        // check for collisions in half the platforms for optimization
+        for (int i = 0; i < platforms.size(); i++) {
+            Platform p = platforms.get(i);
+            if (p.beenPassed(player.getPos()) && p.isColliding(player.getPos())) {
+                player.collide();
+
+                if (player.getVel().getY() > gravity.getY()) {
+                    player.getVel().limitY(Double.MIN_VALUE, 0);
+                    player.getPos().setY(p.getY()-p.getHeight()*0.5);
+                }
+                
+                player.setJump(false);
+            }
+
+            // camera sliding
+            if (player.getPos().getY() < height * 0.75) {
+                if (player.getVel().getY() < 0) {
+                    p.addY(player.getVel().getY() * -1);
+                }
+            }
+
+            // fill top blank space w/ new platforms
+            if (p.getY() > height + 20) {
+                fillPlatforms();
+                platforms.remove(p);
+                score++;
+            }
+        }
+
+        // locks player's position at 75% down the screen
+        if (player.getPos().getY() < height * 0.75)
+            player.getPos().setY(player.getPos().getY() - player.getVel().getY());
+
+        // w
+        if (keys[0] && !player.isJumping()) {
+            player.applyForce(player.JUMP_SPEED);
+            player.setJump(true);
+        }
+    }
+
+    /**
+     * True if player is below the bottom of the screen
+     * @return if player is below bottom of screen
+     */
+    public boolean playerIsOffScreen() {
+        return player.getPos().getY() > height+1.5*player.getHeight();
+    }
+
+    /**
+     * Sets the goal trait to true, which means the level will be treated with a goal.
+     */
+    public void setGoal() {
+        goal = true;
+    }
+
+    /**
+     * Returns true if the level has a goal
+     * @return true or false if goal or not
+     */
+    public boolean isGoal() {
+        return goal;
+    }
+}
+
+boolean[] keys = new boolean[3]; // 0:w, 1:a, 2:s
+
+Level level;
+Hashtable<Long, Integer> highscores;
+ArrayList<Announcement> announcements;
+
+Button freePlayButton, levelsButton;
+Button[] levelsButtons;
+
+boolean started, levelM, levels;
+long seed;
+int currLevel = 0;
+
+void setup() {
+    size(400, 600);
+
+    freePlayButton = new Button(width/2, height*0.6, width*0.6, height*0.1, "Freeplay");
+    levelsButton = new Button(width/2, height*0.73, width*0.6, height*0.1, "Levels");
+    
+    levelsButtons = new Button[10]; 
+    double margin = height*0.05;
+    double step = (height-margin)/levelsButtons.length;
+    for (int i = 0; i < levelsButtons.length;) {
+        levelsButtons[i] = new Button(width/2, margin + step*i + step*0.25, width*0.8, step*0.5, "Level " + ++i).lock();
+    }
+    levelsButtons[0].unlock();
+
+    highscores = new Hashtable<Long, Integer>();
+    announcements = new ArrayList<Announcement>();
+
+    seed = new Random().nextLong();
+
+    newLevel();
+}
+
+void draw() {
+    if (started || levels) {
+        level.update(keys);
+        level.draw();
+        if (level.playerIsOffScreen()) {
+            boolean goal = level.isGoal();
+            newLevel();
+            if (goal) level.setGoal();
+        }
+    } else if (levelM) levelsMenu();
+    else startMenu();
+
+    // update announcements
+    for (int i = 0; i < announcements.size(); i++) {
+        Announcement a = announcements.get(i);
+        a.draw();
+        if (!a.isAlive()) announcements.remove(a);
+    }
+}
+
+void unlockNextLevel() {
+    levelsButtons[++currLevel].unlock();
+}
+
+void announce(String text, double frames) {
+    announcements.add(new Announcement(text, frames));
+}
+
+void newLevel() {
+    if (highscores.get(seed) == null) highscores.put(seed, 0);
+    level = new Level(
+        new Player(width/2, height-15),
+        seed,
+        highscores
+    );
+}
+
+void startMenu() {
+    background(0);
+    started = false;
+    levelM = false;
+    levels = false;
+    
+    freePlayButton.draw();
+    levelsButton.draw();
+}
+
+void levelsMenu() {
+    background(0);
+    started = false;
+    levelM = true;
+    levels = false;
+
+    for (Button b: levelsButtons) {
+        b.draw();
+    }
+}
+
+void mousePressed() {
+    Vec point = new Vec(mouseX, mouseY);
+    if (started) {} 
+    else if (levelM) {
+        for (int i = 0; i < levelsButtons.length; i++) {
+            if (levelsButtons[i].isUnlocked() && levelsButtons[i].isColliding(point)) {
+                levels = true;
+                levelM = false;
+                started = false;
+                seed = (long) i;
+                newLevel();
+                level.setGoal();
+                return;
+            }
+        }
+    } else {
+        if (freePlayButton.isColliding(point)) {
+            started = true;
+            seed = new Random().nextLong();
+            newLevel();
+        }
+        else if (levelsButton.isColliding(point)) levelM = true;
+    }
+}
+
+void keyPressed() {
+    if (key == 'w') keys[0] = true;
+    if (key == 'a') keys[1] = true;
+    if (key == 'd') keys[2] = true;
+    if (key == 'r') {
+        boolean goal = level.isGoal();
+        newLevel();
+        if (goal) level.setGoal();
+    } if (key == 'n' && !levels) {
+        seed = new Random().nextLong();
+        newLevel();
+    }
+    if (key == ESC) {
+        key = 0;
+        announcements.clear();
+        if (levels) levelsMenu();
+        else startMenu();
+    }
+    if (key == 'e') System.out.println(seed);
+}
+
+void keyReleased() {
+    if (key == 'w') keys[0] = false;
+    if (key == 'a') keys[1] = false;
+    if (key == 'd') keys[2] = false;
+}
